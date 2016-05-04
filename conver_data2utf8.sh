@@ -2,7 +2,7 @@
 
 SOURCE_USER="root"
 SOURCE_PASSWORD="password"
-SOURCE_ENDPOINT="mysqldb.localhost.com""
+SOURCE_ENDPOINT="mysqldb.localhost.com"
 MYSQLDUMP_OPT="-u ${USER} -p¢{PASSWORD} -h ${SOURCE_ENDPOINT} --default-character-set=latin1 --disable-keys --skip-triggers -no-create-info --single-transaction "
 
 DESTINATION_USER="root"
