@@ -20,12 +20,14 @@ SOURCE_MYSQL_PASSWORD="PASSWORD"
 SOURCE_MYSQL_ENDPOINT="rds-db.remote.com"
 SOURCE_MYSQL_DATABASES="dbv1 dbv2 leads clientes tmp"
 FILE_DESTINANTIO_PATH="/export"
+
 # Your destinatio environment setings
-COLLATE="utf8"
-CHARSET="utf8_general_ci"
+DESTINATION_MYSQL_CHARSET="utf8"
+DESTINATION_MYSQL_COLLATE="utf8_general_ci"
 
-
+##########################################
 # imutable variables
+# Don´t change code below..
 DATE=`date +%Y-%m-%d`
 RECREATE="${FILE_DESTINANTIO_PATH}/recreate_instance_structure_${DATE}.sql"
 FILE="${FILE_DESTINANTIO_PATH}/database_struct_${DATE}.sql"
@@ -36,7 +38,7 @@ for db in ${SOURCE_DATABASES};
  do
   echo $db
   echo "DROP DATABASE IF EXISTS ${db};" >> ${RECREATE}
-  echo "CREATE DATABASE ${db}  DEFAULT CHARACTER SET ${CHARSET} DEFAULT COLLATE ${COLLATE};" >> ${RECREATE}
+  echo "CREATE DATABASE ${db}  DEFAULT CHARACTER SET ${DESTINATION_MYSQL_CHARSET} DEFAULT COLLATE ${DESTINATION_MYSQL_COLLATE};" >> ${RECREATE}
 done
 echo "source ${FILE};" >> ${RECREATE}
 echo "source ${FILE_ROUTINES}" >> ${RECREATE}
