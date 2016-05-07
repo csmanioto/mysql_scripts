@@ -34,7 +34,7 @@ FILE="${FILE_DESTINANTIO_PATH}/database_struct_${DATE}.sql"
 FILE_ROUTINES="${FILE_DESTINANTIO_PATH}/routine_${DATE}.sql"
 
 echo "-- Create at $${DATE}" > $RECREATE
-for db in ${SOURCE_DATABASES};
+for db in ${SOURCE_MYSQL_DATABASES};
  do
   echo $db
   echo "DROP DATABASE IF EXISTS ${db};" >> ${RECREATE}
