@@ -69,8 +69,8 @@ HOST="-h ${SOURCE_MYSQL_ENDPOINT}"
 
 OPTIONS_TABLE="--skip-triggers --single-transaction --skip-set-charset --no-data --no-set-names --disable-keys  "
 OPTIONS_ROUTINE=" --routines --no-create-info --no-data --no-create-db --skip-opt  "
-MYSQLDUMP_PARAMETERS_TABLES="-u ${LOGIN} -h ${HOST} ${OPTIONS_TABLE} --databases ${SOURCE_DATABASES}"
-MYSQLDUMP_PARAMETERS_ROUTINES="-u ${LOGIN} -h ${HOST} ${OPTIONS_ROUTINE} --databases ${SOURCE_DATABASES}"
+MYSQLDUMP_PARAMETERS_TABLES="${LOGIN} ${HOST} ${OPTIONS_TABLE} --databases ${SOURCE_DATABASES}"
+MYSQLDUMP_PARAMETERS_ROUTINES="${LOGIN} ${HOST} ${OPTIONS_ROUTINE} --databases ${SOURCE_DATABASES}"
 
 # Magic code Export tables and routines in sql file so clean :) Without SET @ or /* and without charset deffinition
 echo " SET foreign_key_checks=0;" > ${FILE}
