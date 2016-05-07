@@ -60,22 +60,22 @@ echo "source ${FILE_ROUTINES}" >> ${RECREATE}
 # perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/'
 #
 # /*!40101 SET character_set_client = @saved_cs_client */;
-# perl -pe '/s^\/\*![0-9]*\s?SET.*\/;$//'
+# perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//'
 ###########
 
 echo "Exporting tables... "
 LOGIN="-u ${SOURCE_MYSQL_USER} -p${SOURCE_MYSQL_PASSWORD}"
 HOST="-h ${SOURCE_MYSQL_ENDPOINT}"
 
-OPTIONS_TABLE="--skip-triggers --single-transaction --skip-set-charset --no-data --no-set-names --disable-keys  "
+OPTIONS_TABLE="--skip-triggers --single-transaction --skip-set-charset --no-data --no-set-names --disable-keys --no-create-db "
 OPTIONS_ROUTINE=" --routines --no-create-info --no-data --no-create-db --skip-opt  "
 MYSQLDUMP_PARAMETERS_TABLES="${LOGIN} ${HOST} ${OPTIONS_TABLE} --databases ${SOURCE_MYSQL_DATABASES}"
 MYSQLDUMP_PARAMETERS_ROUTINES="${LOGIN} ${HOST} ${OPTIONS_ROUTINE} --databases ${SOURCE_MYSQL_DATABASES}"
 
 # Magic code Export tables and routines in sql file so clean :) Without SET @ or /* and without charset deffinition
 echo " SET foreign_key_checks=0;" > ${FILE}
-mysqldump ${MYSQLDUMP_PARAMETERS_TABLES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' >> ${FILE}
+mysqldump ${MYSQLDUMP_PARAMETERS_TABLES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' >> ${FILE}
 
 echo "Exporting Procedures and Triggers... "
 echo " SET foreign_key_checks=0;" > ${FILE_ROUTINES}
-mysqldump ${MYSQLDUMP_PARAMETERS_ROUTINES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' >> ${FILE_ROUTINES}
+mysqldump ${MYSQLDUMP_PARAMETERS_ROUTINES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' >> ${FILE_ROUTINES}
