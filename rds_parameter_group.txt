@@ -1,0 +1,15 @@
+# In AWS RDS is very common use this setup
+
+# Set to use big text index in innodb
+# It´s need when I convert from myisam to innodb
+innodb_large_prefix = 1
+
+# General is necessery to creating function...
+log_bin_trust_function_creators = 1
+
+# It´s a safe way to security charset
+character_set_server=utf8
+character_set_client=utf8
+character_set_results=utf8
+collation_server=utf8_general_ci
+collation_connection=utf8_general_ci
