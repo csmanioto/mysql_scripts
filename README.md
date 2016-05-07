@@ -12,8 +12,13 @@ In my career I did many script to work with MySQL and I lost it and unfortunatel
 Now I decided save this script in github to make versions. But I love helping persons and why not share all scripts in public repository ?
 
 # Help file
+* rds_parameter_group.txt
 
+  Most common variables used in  Amazon Web Sercice -  RDS.
+    - [x] Variables used when change MyISAM to InnoDB
+    - [x] Variables used to character set.
 
+    
 # Stable scripts:
 * clean_export_structure.sh
       - [x] Converting database engine from myisam to innodb. Recreating  triggers and routines in a clean sql file without charset and especial  mysqldump command.
