@@ -15,7 +15,8 @@
 
 
 # Your source environment setings
-SOURCE_LOGIN="-u root  -pPassword"
+SOURCE_LOGIN="root"
+SOURCE_PASSWORD="PASSWORD"
 SOURCE_ENDPOINT="-h rds-db.remote.com"
 SOURCE_DATABASES="dbv1 dbv2 leads clientes tmp"
 DESTINANTIO_PATH="/export"
@@ -26,6 +27,7 @@ CHARSET="utf8_general_ci"
 
 # imutable variables
 DATE=`date +%Y-%m-%d`
+LOGIN="-u ${SOURCE_LOGIN} -p${SOURCE_PASSWORD}"
 OPTIONS="--skip-triggers --single-transaction --skip-set-charset --no-data --no-set-names --disable-keys  "
 OPTIONS_ROUTINE=" --routines --no-create-info --no-data --no-create-db --skip-opt  "
 RECREATE="${DESTINANTIO_PATH}/recreate_instance_structure_${DATE}.sql"
@@ -62,8 +64,8 @@ echo "source ${FILE_ROUTINES}" >> ${RECREATE}
 echo "Exporting tables... "
 # Magic code Export tables and routines in sql file so clean :) Without SET @ or /* and without charset deffinition
 echo " SET foreign_key_checks=0;" > ${FILE}
-mysqldump ${SOURCE_LOGIN} ${SOURCE_ENDPOINT} ${OPTIONS} --databases ${SOURCE_DATABASES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' >> ${FILE}
+mysqldump ${LOGIN} ${SOURCE_ENDPOINT} ${OPTIONS} --databases ${SOURCE_DATABASES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' >> ${FILE}
 
 echo "Exporting Procedures and Triggers... "
 echo " SET foreign_key_checks=0;" > ${FILE_ROUTINES}
-mysqldump ${SOURCE_LOGIN} ${SOURCE_ENDPOINT} ${OPTIONS_ROUTINE} --databases ${SOURCE_DATABASES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' >> ${FILE_ROUTINES}
+mysqldump ${LOGIN} ${SOURCE_ENDPOINT} ${OPTIONS_ROUTINE} --databases ${SOURCE_DATABASES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' >> ${FILE_ROUTINES}
