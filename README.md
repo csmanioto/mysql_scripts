@@ -4,6 +4,7 @@
 Carlos Smaniotto - More than 15 years of career in Database and infrastructure IT.
 * https://www.linkedin.com/in/smanioto
 * http://www.csmaniotto.com/
+* http://make-install.blogspot.com.br/
 
 ## Motivation of this repository motivation:
 
@@ -18,7 +19,7 @@ Now I decided save this script in github to make versions. But I love helping pe
     - [x] Variables used when change MyISAM to InnoDB
     - [x] Variables used to character set.
 
-    
+
 # Stable scripts:
 * clean_export_structure.sh
       - [x] Converting database engine from myisam to innodb. Recreating  triggers and routines in a clean sql file without charset and especial  mysqldump command.

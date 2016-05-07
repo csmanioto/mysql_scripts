@@ -32,9 +32,15 @@ RECREATE="recreate_instance_structure_${DATE}.sql"
 FILE="database_struct_${DATE}.sql"
 FILE_ROUTINES="routine_${DATE}.sql"
 
-# Magic code Export tables and routines in sql file so clean :) Without SET @ or /* and without charset deffinition
-echo " SET foreign_key_checks=0;" > ${FILE}
-echo " SET foreign_key_checks=0;" > ${FILE_ROUTINES}
+echo "-- Create at $${DATE}" > $RECREATE
+for db in ${SOURCE_DATABASES};
+ do
+  echo $db
+  echo "DROP DATABASE IF EXISTS ${db};" >> ${RECREATE}
+  echo "CREATE DATABASE ${db}  DEFAULT CHARACTER SET ${CHARSET} DEFAULT COLLATE ${COLLATE};" >> ${RECREATE}
+done
+echo "source ${FILE};" >> ${RECREATE}
+echo "source ${FILE_ROUTINES}" >> ${RECREATE}
 
 # AUTO_INCREMENT=xxxx
 #perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g'
@@ -53,12 +59,11 @@ echo " SET foreign_key_checks=0;" > ${FILE_ROUTINES}
 #/*!40101 SET character_set_client = @saved_cs_client */;
 #perl -pe '/s^\/\*![0-9]*\s?SET.*\/;$//'
 
-for db in ${DATABASES};
-  echo "DROP DATABASE IF EXISTS `${db}`;" > ${RECREATE}
-  echo "CREATE DATABASE `${db}`  DEFAULT CHARACTER SET ${CHARSET} DEFAULT COLLATE ${COLLATE};" >> ${RECREATE}
-done
-echo "source ${FILE};" >> ${RECREATE}
-echo "source ${FILE_ROUTINES}" >> ${RECREATE}
-
+echo "Exporting tables... "
+# Magic code Export tables and routines in sql file so clean :) Without SET @ or /* and without charset deffinition
+echo " SET foreign_key_checks=0;" > ${FILE}
 mysqldump ${SOURCE_LOGIN} ${SOURCE_ENDPOINT} ${OPTIONS} --databases ${SOURCE_DATABASES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' >> ${FILE}
+
+echo "Exporting Procedures and Triggers... "
+echo " SET foreign_key_checks=0;" > ${FILE_ROUTINES}
 mysqldump ${SOURCE_LOGIN} ${SOURCE_ENDPOINT} ${OPTIONS_ROUTINE} --databases ${SOURCE_DATABASES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' >> ${FILE_ROUTINES}
