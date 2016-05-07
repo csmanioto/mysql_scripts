@@ -18,7 +18,7 @@
 SOURCE_LOGIN="-u root  -pPassword"
 SOURCE_ENDPOINT="-h rds-db.remote.com"
 SOURCE_DATABASES="dbv1 dbv2 leads clientes tmp"
-
+DESTINANTIO_PATH="/export"
 # Your destinatio environment setings
 COLLATE="utf8"
 CHARSET="utf8_general_ci"
@@ -28,9 +28,9 @@ CHARSET="utf8_general_ci"
 DATE=`date +%Y-%m-%d`
 OPTIONS="--skip-triggers --single-transaction --skip-set-charset --no-data --no-set-names --disable-keys  "
 OPTIONS_ROUTINE=" --routines --no-create-info --no-data --no-create-db --skip-opt  "
-RECREATE="recreate_instance_structure_${DATE}.sql"
-FILE="database_struct_${DATE}.sql"
-FILE_ROUTINES="routine_${DATE}.sql"
+RECREATE="${DESTINANTIO_PATH}/recreate_instance_structure_${DATE}.sql"
+FILE="${DESTINANTIO_PATH}/database_struct_${DATE}.sql"
+FILE_ROUTINES="${DESTINANTIO_PATH}/routine_${DATE}.sql"
 
 echo "-- Create at $${DATE}" > $RECREATE
 for db in ${SOURCE_DATABASES};
