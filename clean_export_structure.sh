@@ -92,8 +92,9 @@ echo "source ${FILE_ROUTINES};" >> ${RECREATE}
 # Change the single  "InnoDB;"" to InnoDB with Row DYNAMIC compress - ROW_FORMAT=DYNAMIC;
 # perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/'
 #
-# Remove /*!50013 DEFINER=`admin`@`%` SQL SECURITY DEFINER */
-# perl -pe 's/^\/\*![0-9]*\s*?DEFINER=.*@*\s*?SQL*\s*?SECURITY*\s*DEFINER*\s*?\*\/$//'
+# Remove /*!50013 DEFINER=`admin`@`%` SQL SECURITY DEFINER */ or /*!50017 DEFINER=`admin`@`%`*/
+# Remove * with DEFINER between /* and */
+# perl -pe 's/\/\*![0-9]*\s*?DEFINER=*\s*?.*@*`?\*\//'
 ###########
 
 
@@ -104,8 +105,8 @@ MYSQLDUMP_PARAMETERS_ROUTINES="${LOGIN} ${HOST} ${OPTIONS_ROUTINE} --databases $
 
 # Magic code Export tables and routines in sql file so clean :) Without SET @ or /* and without charset deffinition
 echo " SET foreign_key_checks=0;" > ${FILE}
-mysqldump ${MYSQLDUMP_PARAMETERS_TABLES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC;/' |  perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/' | perl -pe 's/^\/\*![0-9]*\s*?DEFINER=.*@*\s*?SQL*\s*?SECURITY*\s*DEFINER*\s*?\*\/$//' >> ${FILE}
+mysqldump ${MYSQLDUMP_PARAMETERS_TABLES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC;/' |  perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/'  | perl -pe 's/\/\*![0-9]*\s*?DEFINER=*\s*?.*@*`?\*\//' >> ${FILE}
 
 echo "Exporting Procedures and Triggers... "
 echo " SET foreign_key_checks=0;" > ${FILE_ROUTINES}
-mysqldump ${MYSQLDUMP_PARAMETERS_ROUTINES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC;/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/' | perl -pe 's/^\/\*![0-9]*\s*?DEFINER=.*@*\s*?SQL*\s*?SECURITY*\s*DEFINER*\s*?\*\/$//' >> ${FILE_ROUTINES}
+mysqldump ${MYSQLDUMP_PARAMETERS_ROUTINES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC;/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/' | perl -pe 's/\/\*![0-9]*\s*?DEFINER=*\s*?.*@*`?\*\//' >> ${FILE_ROUTINES}
