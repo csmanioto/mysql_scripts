@@ -13,35 +13,52 @@
 #   * The first file, contains the mysql SOURCE command to invoke the others scripts.
 #   * So has possibility automatic creating of all structure into destination using a single sql file to do it.
 
-
+##########################################
 # Your source environment setings
+# Change with your environment information.
 SOURCE_MYSQL_USER="root"
 SOURCE_MYSQL_PASSWORD="PASSWORD"
 SOURCE_MYSQL_ENDPOINT="rds-db.remote.com"
-SOURCE_MYSQL_DATABASES="dbv1 dbv2 leads clientes tmp"
+# If SOURCE_MYSQL_DATABASES is empty, script will export from SOURCE_ENDPOINT all databases (except systems databases)
+MYSQL_DATABASES_LIST="dbv1 dbv2 leads clientes tmp"
 FILE_DESTINANTIO_PATH="/export"
 
-# Your destinatio environment setings
+# Your destinantion environment setings
 DESTINATION_MYSQL_CHARSET="utf8"
 DESTINATION_MYSQL_COLLATE="utf8_general_ci"
+############################################
 
 ##########################################
-# imutable variables
-# Don´t change code below..
-DATE=`date +%Y-%m-%d`
+# imutable variables                    #
+# Don´t change code below..             #
+#########################################
+LOGIN="-u ${SOURCE_MYSQL_USER} -p${SOURCE_MYSQL_PASSWORD}"
+HOST="-h ${SOURCE_MYSQL_ENDPOINT}"
+OPTIONS_TABLE="--skip-triggers --single-transaction --skip-set-charset --no-data --no-set-names --disable-keys --no-create-db "
+OPTIONS_ROUTINE=" --routines --no-create-info --no-data --no-create-db --skip-opt  "
+
+
+###########################################
+# Start of export algorithim              #
+###########################################
+if [ -z $MYSQL_DATABASES_LIST ]; then
+    MYSQL_DATABASES_LIST=$(mysql ${LOGIN} ${HOST} -r -s -N -e "show databases" | grep -Ev "^(Database|mysql|performance_schema|information_schema|innodb|sys)$"
+fi
+
+DATE=$(date +%Y-%m-%d)
 RECREATE="${FILE_DESTINANTIO_PATH}/recreate_instance_structure_${DATE}.sql"
 FILE="${FILE_DESTINANTIO_PATH}/database_struct_${DATE}.sql"
 FILE_ROUTINES="${FILE_DESTINANTIO_PATH}/routine_${DATE}.sql"
 
 echo "-- Create at $${DATE}" > $RECREATE
-for db in ${SOURCE_MYSQL_DATABASES};
+for db in ${MYSQL_DATABASES_LIST};
  do
   echo $db
   echo "DROP DATABASE IF EXISTS ${db};" >> ${RECREATE}
   echo "CREATE DATABASE ${db}  DEFAULT CHARACTER SET ${DESTINATION_MYSQL_CHARSET} DEFAULT COLLATE ${DESTINATION_MYSQL_COLLATE};" >> ${RECREATE}
 done
 echo "source ${FILE};" >> ${RECREATE}
-echo "source ${FILE_ROUTINES}" >> ${RECREATE}
+echo "source ${FILE_ROUTINES};" >> ${RECREATE}
 
 ###########
 # Regexp Rules and Filters...
@@ -64,13 +81,8 @@ echo "source ${FILE_ROUTINES}" >> ${RECREATE}
 ###########
 
 echo "Exporting tables... "
-LOGIN="-u ${SOURCE_MYSQL_USER} -p${SOURCE_MYSQL_PASSWORD}"
-HOST="-h ${SOURCE_MYSQL_ENDPOINT}"
-
-OPTIONS_TABLE="--skip-triggers --single-transaction --skip-set-charset --no-data --no-set-names --disable-keys --no-create-db "
-OPTIONS_ROUTINE=" --routines --no-create-info --no-data --no-create-db --skip-opt  "
-MYSQLDUMP_PARAMETERS_TABLES="${LOGIN} ${HOST} ${OPTIONS_TABLE} --databases ${SOURCE_MYSQL_DATABASES}"
-MYSQLDUMP_PARAMETERS_ROUTINES="${LOGIN} ${HOST} ${OPTIONS_ROUTINE} --databases ${SOURCE_MYSQL_DATABASES}"
+MYSQLDUMP_PARAMETERS_TABLES="${LOGIN} ${HOST} ${OPTIONS_TABLE} --databases ${MYSQL_DATABASES_LIST}"
+MYSQLDUMP_PARAMETERS_ROUTINES="${LOGIN} ${HOST} ${OPTIONS_ROUTINE} --databases ${MYSQL_DATABASES_LIST}"
 
 # Magic code Export tables and routines in sql file so clean :) Without SET @ or /* and without charset deffinition
 echo " SET foreign_key_checks=0;" > ${FILE}
