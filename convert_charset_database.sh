@@ -42,6 +42,10 @@ FILE_DESTINANTIO_PATH="/export"
 # imutable variables                    #
 # Don´t change code below..             #
 #########################################
+if [-f user_variables.cfg]; then
+  source user_variables.cfg
+fi
+
 DATE=$(date +%Y-%m-%d)
 ERROR_LOG="${FILE_DESTINANTIO_PATH}/error_${DATE}.log"
 STATUS_LOG="${FILE_DESTINANTIO_PATH}/status_${DATE}.log"
@@ -69,7 +73,7 @@ MYSQL_PARAMTERS="${DST_LOGIN} ${DST_HOST} ${MYSQL_OPTIONS} "
 # Start of export algorithim              #
 ###########################################
 if [ -z $MYSQL_DATABASES_LIST ]; then
-    MYSQL_DATABASES_LIST=$(mysql ${SRC_LOGIN} -h ${SRC_HOST} -r -s -N -e "show databases" | grep -Ev "^(Database|mysql|performance_schema|information_schema|innodb|sys)$"
+    MYSQL_DATABASES_LIST=$(mysql ${SRC_LOGIN} -h ${SRC_HOST} -r -s -N -e "show databases" | grep -Ev "^(Database|mysql|performance_schema|information_schema|innodb|sys)$")
 fi
 
 

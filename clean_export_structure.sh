@@ -12,6 +12,9 @@
 #   * routine_yyyy-mm-dd.sql -> Contains the DDL to create  triggers and procedures completely clean of mysqldump code.
 #   * The first file, contains the mysql SOURCE command to invoke the others scripts.
 #   * So has possibility automatic creating of all structure into destination using a single sql file to do it.
+# POS INSTALATION
+# $ cd $FILE_DESTINANTIO_PATH
+# $ mysql -u new_mysql_login -h new_mysql_endpoint < recreate_instance_structure_yyyy-mm-dd.sql
 
 ##########################################
 # Your source environment setings
@@ -32,6 +35,10 @@ DESTINATION_MYSQL_COLLATE="utf8_general_ci"
 # imutable variables                    #
 # Don´t change code below..             #
 #########################################
+if [-f user_variables.cfg]; then
+  source user_variables.cfg
+fi
+
 LOGIN="-u ${SOURCE_MYSQL_USER} -p${SOURCE_MYSQL_PASSWORD}"
 HOST="-h ${SOURCE_MYSQL_ENDPOINT}"
 OPTIONS_TABLE="--skip-triggers --single-transaction --skip-set-charset --no-data --no-set-names --disable-keys --no-create-db "
@@ -42,7 +49,7 @@ OPTIONS_ROUTINE=" --routines --no-create-info --no-data --no-create-db --skip-op
 # Start of export algorithim              #
 ###########################################
 if [ -z $MYSQL_DATABASES_LIST ]; then
-    MYSQL_DATABASES_LIST=$(mysql ${LOGIN} ${HOST} -r -s -N -e "show databases" | grep -Ev "^(Database|mysql|performance_schema|information_schema|innodb|sys)$"
+    MYSQL_DATABASES_LIST=$(mysql ${LOGIN} ${HOST} -r -s -N -e "show databases" | grep -Ev "^(Database|mysql|performance_schema|information_schema|innodb|sys)$")
 fi
 
 DATE=$(date +%Y-%m-%d)
@@ -78,7 +85,18 @@ echo "source ${FILE_ROUTINES};" >> ${RECREATE}
 #
 # /*!40101 SET character_set_client = @saved_cs_client */;
 # perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//'
+#
+# Remove ROW_FORMAT=COMPACT AND COMPRESS, ETC
+# perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC/'
+#
+# Change the single  "InnoDB;"" to InnoDB with Row DYNAMIC compress - ROW_FORMAT=DYNAMIC;
+# perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/'
+#
+# Remove /*!50013 DEFINER=`admin`@`%` SQL SECURITY DEFINER */
+# perl -pe 's/^\/\*![0-9]*\s*?DEFINER=.*@*\s*?SQL*\s*?SECURITY*\s*DEFINER*\s*?\*\/$//'
 ###########
+
+
 
 echo "Exporting tables... "
 MYSQLDUMP_PARAMETERS_TABLES="${LOGIN} ${HOST} ${OPTIONS_TABLE} --databases ${MYSQL_DATABASES_LIST}"
@@ -86,8 +104,8 @@ MYSQLDUMP_PARAMETERS_ROUTINES="${LOGIN} ${HOST} ${OPTIONS_ROUTINE} --databases $
 
 # Magic code Export tables and routines in sql file so clean :) Without SET @ or /* and without charset deffinition
 echo " SET foreign_key_checks=0;" > ${FILE}
-mysqldump ${MYSQLDUMP_PARAMETERS_TABLES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' >> ${FILE}
+mysqldump ${MYSQLDUMP_PARAMETERS_TABLES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC;/' |  perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/' | perl -pe 's/^\/\*![0-9]*\s*?DEFINER=.*@*\s*?SQL*\s*?SECURITY*\s*DEFINER*\s*?\*\/$//' >> ${FILE}
 
 echo "Exporting Procedures and Triggers... "
 echo " SET foreign_key_checks=0;" > ${FILE_ROUTINES}
-mysqldump ${MYSQLDUMP_PARAMETERS_ROUTINES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' >> ${FILE_ROUTINES}
+mysqldump ${MYSQLDUMP_PARAMETERS_ROUTINES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC;/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/' | perl -pe 's/^\/\*![0-9]*\s*?DEFINER=.*@*\s*?SQL*\s*?SECURITY*\s*DEFINER*\s*?\*\/$//' >> ${FILE_ROUTINES}
