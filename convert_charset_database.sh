@@ -93,9 +93,9 @@ do
     CONVERTED_FILE"${FILE_DESTINANTIO_PATH}/${db}_dataonly_${DESTINATION_MYSQL_CHARSET}_${DATE}.sql"
 
     if mysqldump ${MYSQLDUMP_PARAMETERS} ${db} -r  ${ORIGINAL_FILE}; then
-      if iconv -f ${SOURCE_ICONV_CHARSET} -f ${DESTINATION_ICONV_CHARSET} < ${ORIGINAL_FILE} > ${CONVERTED_FILE};
-        sed -e "s/SET NAMES ${SOURCE_MYSQL_CHARSET}/SET NAMES ${DESTINATION_MYSQL_CHARSET}/g" -i ${CONVERTED_FILE}
-        sed -e "s/CHARSET=latin1/CHARSET=${DESTINATION_MYSQL_CHARSET} COLLATE=${DESTINATION_MYSQL_COLLATE}/g" -i ${CONVERTED_FILE}
+      if iconv -f ${SOURCE_ICONV_CHARSET} -t ${DESTINATION_ICONV_CHARSET}  ${ORIGINAL_FILE} > ${CONVERTED_FILE};
+        #sed -e "s/SET NAMES ${SOURCE_MYSQL_CHARSET}/SET NAMES ${DESTINATION_MYSQL_CHARSET}/g" -i ${CONVERTED_FILE}
+        #sed -e "s/CHARSET=latin1/CHARSET=${DESTINATION_MYSQL_CHARSET} COLLATE=${DESTINATION_MYSQL_COLLATE}/g" -i ${CONVERTED_FILE}
         rm -f ${ORIGINAL_FILE}
       else
         echo "${NEW_DATE}: Error on iconv of ${db} " | tee -a ${ERROR_LOG}
@@ -115,12 +115,24 @@ echo "${NEW_DATE}: IMPORTING PROCESSS.."  | tee -a ${STATUS_LOG}
 echo "---------------------------------"  | tee -a ${STATUS_LOG}
 
 echo "${NEW_DATE}: IMPORTING database ${db}..."  | tee -a ${STATUS_LOG}
+
+#
+# Investigar o problema do pq não importou...
+# Tratar erro no final:
+#ERROR 1231 (42000): Variable 'time_zone' can't be set to the value of 'NULL'
+#ERROR 1231 (42000): Variable 'sql_mode' can't be set to the value of 'NULL'
+#ERROR 1231 (42000): Variable 'foreign_key_checks' can't be set to the value of 'NULL'
+#ERROR 1231 (42000): Variable 'unique_checks' can't be set to the value of 'NULL'
+#ERROR 1231 (42000): Variable 'sql_notes' can't be set to the value of 'NULL'
+
 for db in ${MYSQL_DATABASES_LIST};
 do
   NEW_DATE=$(date "+%Y-%m-%d %H:%M:%S")
   echo "${NEW_DATE}: IMPORTING database ${db}..."  | tee -a ${STATUS_LOG}
   CONVERTED_FILE"${FILE_DESTINANTIO_PATH}/${db}_dataonly_${DESTINATION_MYSQL_CHARSET}_${DATE}.sql"
-  if mysql ${MYSQL_PARAMTERS} $db -e"source ${CONVERTED_FILE}"; then
+  DB_LOG="${FILE_DESTINANTIO_PATH}/${db}.log"
+
+  if mysql ${MYSQL_PARAMTERS} --tee=$DB_LOG  $db -e "source ${CONVERTED_FILE};"; then
     NEW_DATE=$(date "+%Y-%m-%d %H:%M:%S")
     echo "${NEW_DATE}: ${db} IMPORTED WITH SUCCESSFUL"  | tee -a ${STATUS_LOG}
   else

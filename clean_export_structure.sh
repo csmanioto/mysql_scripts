@@ -26,9 +26,10 @@ SOURCE_MYSQL_ENDPOINT="rds-db.remote.com"
 MYSQL_DATABASES_LIST="dbv1 dbv2 leads clientes tmp"
 FILE_DESTINANTIO_PATH="/export"
 
-# Your destinantion environment setings
-DESTINATION_MYSQL_CHARSET="utf8"
-DESTINATION_MYSQL_COLLATE="utf8_general_ci"
+# Your destinantion environment setings -- If you want execute on remote server after finish the DDL creation.
+DESTINATION_MYSQL_USER="root"
+DESTINATION_MYSQL_PASSWORD="password"
+DESTINATION_MYSQL_ENDPOINT="rdsdb.remote.com"
 ############################################
 
 ##########################################
@@ -41,8 +42,11 @@ fi
 
 LOGIN="-u ${SOURCE_MYSQL_USER} -p${SOURCE_MYSQL_PASSWORD}"
 HOST="-h ${SOURCE_MYSQL_ENDPOINT}"
-OPTIONS_TABLE="--skip-triggers --single-transaction --skip-set-charset --no-data --no-set-names --disable-keys --no-create-db "
-OPTIONS_ROUTINE=" --routines --no-create-info --no-data --no-create-db --skip-opt  "
+OPTIONS_MYSQLDUMP_COMMON=" --single-transaction --skip-set-charset --no-data --no-set-names --disable-keys --no-create-db "
+OPTIONS_MYSQLDUMP_TABLE="${OPTIONS_MYSQLDUMP_COMMON} --skip-triggers "
+OPTIONS_MYSQLDUMP_ROUTINE="${OPTIONS_MYSQLDUMP_COMMON} --routines --no-create-info --skip-opt"
+#OPTIONS_TABLE="--skip-triggers --single-transaction --skip-set-charset --no-data --no-set-names --disable-keys --no-create-db "
+#OPTIONS_ROUTINE="--routines --single-transaction --skip-set-charset  --no-data --no-set-names --disable-keys --no-create-info --no-create-db --skip-opt "
 
 
 ###########################################
@@ -68,6 +72,7 @@ echo "source ${FILE};" >> ${RECREATE}
 echo "source ${FILE_ROUTINES};" >> ${RECREATE}
 
 ###########
+# Test online on https://regex101.com/
 # Regexp Rules and Filters...
 # AUTO_INCREMENT=xxxx
 # perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g'
@@ -92,21 +97,49 @@ echo "source ${FILE_ROUTINES};" >> ${RECREATE}
 # Change the single  "InnoDB;"" to InnoDB with Row DYNAMIC compress - ROW_FORMAT=DYNAMIC;
 # perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/'
 #
-# Remove /*!50013 DEFINER=`admin`@`%` SQL SECURITY DEFINER */ or /*!50017 DEFINER=`admin`@`%`*/
-# Remove * with DEFINER between /* and */
-# perl -pe 's/\/\*![0-9]*\s*?DEFINER=*\s*?.*@*`?\*\//'
+# Remove /*!50013 DEFINER=`admin`@`%` SQL SECURITY DEFINER */
+# Remobe SQL SECURITY part...
+# perl -pe 's/SQL\s*?SECURITY\s*?DEFINER//'
+#
+# Remove DEFINER between /* and */
+# perl -pe 's/DEFINER=\`admin\`@\`%\`//'
+#
+# REMOVE  'latin1_swedish_ci' or  'utf8_general_ci'
+# perl -pe "s/\'(latin1|utf8).*?\'//"
+#
+# Remove collate utf8_general_ci
+# perl -pe 's/collate\s(latin1|utf8)_[a-z]*_[a-z]*//'
+#
+# REMOVE CHARSET latin1
+# perl -pe 's/CHARSET\s(latin1|utf8)?\s//'
 ###########
 
-
-
 echo "Exporting tables... "
-MYSQLDUMP_PARAMETERS_TABLES="${LOGIN} ${HOST} ${OPTIONS_TABLE} --databases ${MYSQL_DATABASES_LIST}"
-MYSQLDUMP_PARAMETERS_ROUTINES="${LOGIN} ${HOST} ${OPTIONS_ROUTINE} --databases ${MYSQL_DATABASES_LIST}"
+MYSQLDUMP_PARAMETERS_TABLES="${LOGIN} ${HOST} ${OPTIONS_MYSQLDUMP_TABLE} --databases ${MYSQL_DATABASES_LIST}"
+MYSQLDUMP_PARAMETERS_ROUTINES="${LOGIN} ${HOST} ${OPTIONS_MYSQLDUMP_ROUTINE} --databases ${MYSQL_DATABASES_LIST}"
 
 # Magic code Export tables and routines in sql file so clean :) Without SET @ or /* and without charset deffinition
 echo " SET foreign_key_checks=0;" > ${FILE}
-mysqldump ${MYSQLDUMP_PARAMETERS_TABLES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC;/' |  perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/'  | perl -pe 's/\/\*![0-9]*\s*?DEFINER=*\s*?.*@*`?\*\//' >> ${FILE}
+mysqldump ${MYSQLDUMP_PARAMETERS_TABLES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC;/' |  perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/'  |  perl -pe 's/DEFINER=\`admin\`@\`%\`//' | perl -pe 's/SQL\s*?SECURITY\s*?DEFINER//'  >> ${FILE}
 
 echo "Exporting Procedures and Triggers... "
 echo " SET foreign_key_checks=0;" > ${FILE_ROUTINES}
-mysqldump ${MYSQLDUMP_PARAMETERS_ROUTINES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC;/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/' | perl -pe 's/\/\*![0-9]*\s*?DEFINER=*\s*?.*@*`?\*\//' >> ${FILE_ROUTINES}
+#mysqldump ${MYSQLDUMP_PARAMETERS_ROUTINES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC;/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/' |  perl -pe 's/DEFINER=\`admin\`@\`%\`//' | perl -pe 's/SQL\s*?SECURITY\s*?DEFINER//' |  perl -pe "s/\'latin1.*?\'//" | perl -pe 's/CHARSET\s(latin1|utf8)?\s//' | perl -pe 's/collate\s(latin1|utf8)_[a-z]*_[a-z]*//' | perl -pe "s/\'(latin1|utf8).*?\'//" >> ${FILE_ROUTINES}
+mysqldump ${MYSQLDUMP_PARAMETERS_ROUTINES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC;/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/' |  perl -pe 's/DEFINER=\`admin\`@\`%\`//' | perl -pe 's/SQL\s*?SECURITY\s*?DEFINER//' |  perl -pe 's/CHARSET\s(latin1|utf8)?\s//' | perl -pe 's/collate\s(latin1|utf8)_[a-z]*_[a-z]*//' | perl -pe "s/\'(latin1|utf8).*?\'//" >> ${FILE_ROUTINES}
+
+## Remote Server
+# Execute Script Session
+DST_LOGIN="-u ${DESTINATION_MYSQL_USER} -p${DESTINATION_MYSQL_PASSWORD}"
+DST_HOST="-h ${DESTINATION_MYSQL_ENDPOINT}"
+MYSQL_OPTIONS="--default-character-set=${DESTINATION_MYSQL_CHARSET}"
+MYSQL_PARAMTERS="${DST_LOGIN} ${DST_HOST} ${MYSQL_OPTIONS} "
+read -t 10 -r -p "Execute the script on remote server? [y/N] (10 seconds timeout ) " response
+case $response in
+    [yY][eE][sS]|[yY])
+        mysql ${MYSQL_PARAMTERS} < ${RECREATE}
+        ;;
+    *)
+        echo "Finish... You can execute in anytime:"
+        echo "mysql options < ${RECREATE}"
+        ;;
+esac
