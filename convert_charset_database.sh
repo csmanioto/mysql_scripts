@@ -16,27 +16,10 @@
 # With your $DESTINATION_MYSQL_CHARSET and $DESTINATION_MYSQL_COLLATE
 
 
-##########################################
-# Your source environment setings
-# Change with your environment information.
-SOURCE_MYSQL_USER="root"
-SOURCE_MYSQL_PASSWORD="PASSWORD"
-SOURCE_MYSQL_ENDPOINT="rds-db.remote.com"
-SOURCE_MYSQL_CHARSET="latin1"
+##############################################################
+# Your source environment setings in file user_variables.cfg #
+##############################################################
 
-# Your destinantion environment setings
-DESTINATION_MYSQL_USER="root"
-DESTINATION_MYSQL_PASSWORD="password"
-DESTINATION_MYSQL_ENDPOINT="rdsdb.remote.com"
-DESTINATION_MYSQL_CHARSET="utf8"
-DESTINATION_MYSQL_COLLATE="utf8_general_ci"
-
-# Export settings...
-# If SOURCE_MYSQL_DATABASES is empty, script will export from SOURCE_ENDPOINT all databases (except systems databases)
-MYSQL_DATABASES_LIST="dbv1 dbv2 leads clientes tmp"
-FILE_DESTINANTIO_PATH="/export"
-
-#################################################
 
 #########################################
 # imutable variables                    #
@@ -93,7 +76,7 @@ do
     CONVERTED_FILE"${FILE_DESTINANTIO_PATH}/${db}_dataonly_${DESTINATION_MYSQL_CHARSET}_${DATE}.sql"
 
     if mysqldump ${MYSQLDUMP_PARAMETERS} ${db} -r  ${ORIGINAL_FILE}; then
-      if iconv -f ${SOURCE_ICONV_CHARSET} -t ${DESTINATION_ICONV_CHARSET}  ${ORIGINAL_FILE} > ${CONVERTED_FILE};
+      if iconv -f ${SOURCE_ICONV_CHARSET} -t ${DESTINATION_ICONV_CHARSET}  ${ORIGINAL_FILE} > ${CONVERTED_FILE}; then
         #sed -e "s/SET NAMES ${SOURCE_MYSQL_CHARSET}/SET NAMES ${DESTINATION_MYSQL_CHARSET}/g" -i ${CONVERTED_FILE}
         #sed -e "s/CHARSET=latin1/CHARSET=${DESTINATION_MYSQL_CHARSET} COLLATE=${DESTINATION_MYSQL_COLLATE}/g" -i ${CONVERTED_FILE}
         rm -f ${ORIGINAL_FILE}
@@ -132,7 +115,7 @@ do
   CONVERTED_FILE"${FILE_DESTINANTIO_PATH}/${db}_dataonly_${DESTINATION_MYSQL_CHARSET}_${DATE}.sql"
   DB_LOG="${FILE_DESTINANTIO_PATH}/${db}.log"
 
-  if mysql ${MYSQL_PARAMTERS} --tee=$DB_LOG  $db -e "SET @FOREIGN_KEY_CHECKS = FALSE; SET @TRIGGER_CHECKS = FALSE; source ${CONVERTED_FILE};"; then
+  if mysql ${MYSQL_PARAMTERS} --tee=$DB_LOG  $db -e "SET @FOREIGN_KEY_CHECKS = FALSE; SET @TRIGGER_CHECKS = FALSE;source ${CONVERTED_FILE};"; then
     NEW_DATE=$(date "+%Y-%m-%d %H:%M:%S")
     echo "${NEW_DATE}: ${db} IMPORTED WITH SUCCESSFUL"  | tee -a ${STATUS_LOG}
   else
