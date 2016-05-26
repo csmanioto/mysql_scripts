@@ -22,14 +22,22 @@
 SOURCE_MYSQL_USER="root"
 SOURCE_MYSQL_PASSWORD="PASSWORD"
 SOURCE_MYSQL_ENDPOINT="rds-db.remote.com"
-# If SOURCE_MYSQL_DATABASES is empty, script will export from SOURCE_ENDPOINT all databases (except systems databases)
-MYSQL_DATABASES_LIST="dbv1 dbv2 leads clientes tmp"
-FILE_DESTINANTIO_PATH="/export"
+#SOURCE_MYSQL_CHARSET="latin1"
 
 # Your destinantion environment setings -- If you want execute on remote server after finish the DDL creation.
 DESTINATION_MYSQL_USER="root"
 DESTINATION_MYSQL_PASSWORD="password"
 DESTINATION_MYSQL_ENDPOINT="rdsdb.remote.com"
+#DESTINATION_MYSQL_CHARSET="utf8"
+#DESTINATION_MYSQL_COLLATE="utf8_general_ci"
+
+# Export settings...
+# If SOURCE_MYSQL_DATABASES is empty, script will export from SOURCE_ENDPOINT all databases (except systems databases)
+MYSQL_DATABASES_LIST="dbv1 dbv2 leads clientes tmp"
+FILE_DESTINANTIO_PATH="/export"
+
+
+
 ############################################
 
 ##########################################
@@ -57,19 +65,18 @@ if [ -z $MYSQL_DATABASES_LIST ]; then
 fi
 
 DATE=$(date +%Y-%m-%d)
-RECREATE="${FILE_DESTINANTIO_PATH}/recreate_instance_structure_${DATE}.sql"
-FILE="${FILE_DESTINANTIO_PATH}/database_struct_${DATE}.sql"
+FILE_TABLES="${FILE_DESTINANTIO_PATH}/recreate_instance_structure_${DATE}.sql"
+FILE_DBS="${FILE_DESTINANTIO_PATH}/database_struct_${DATE}.sql"
 FILE_ROUTINES="${FILE_DESTINANTIO_PATH}/routine_${DATE}.sql"
+ALL_IN_ONE="${FILE_DESTINANTIO_PATH}/allinone_${DATE}.sql"
 
-echo "-- Create at $${DATE}" > $RECREATE
+echo "-- Create at ${DATE}" > ${FILE_TABLES}
 for db in ${MYSQL_DATABASES_LIST};
  do
   echo $db
-  echo "DROP DATABASE IF EXISTS ${db};" >> ${RECREATE}
-  echo "CREATE DATABASE ${db}  DEFAULT CHARACTER SET ${DESTINATION_MYSQL_CHARSET} DEFAULT COLLATE ${DESTINATION_MYSQL_COLLATE};" >> ${RECREATE}
+  echo "DROP DATABASE IF EXISTS ${db};" >> ${FILE_DBS}
+  echo "CREATE DATABASE ${db}  DEFAULT CHARACTER SET ${DESTINATION_MYSQL_CHARSET} DEFAULT COLLATE ${DESTINATION_MYSQL_COLLATE};" >> ${FILE_DBS}
 done
-echo "source ${FILE};" >> ${RECREATE}
-#echo "source ${FILE_ROUTINES};" >> ${RECREATE}
 
 ###########
 # Test online on https://regex101.com/
@@ -119,10 +126,12 @@ MYSQLDUMP_PARAMETERS_TABLES="${LOGIN} ${HOST} ${OPTIONS_MYSQLDUMP_TABLE} --datab
 MYSQLDUMP_PARAMETERS_ROUTINES="${LOGIN} ${HOST} ${OPTIONS_MYSQLDUMP_ROUTINE} --databases ${MYSQL_DATABASES_LIST}"
 
 # Magic code Export tables and routines in sql file so clean :) Without SET @ or /* and without charset deffinition
-echo " SET foreign_key_checks=0;" > ${FILE}
-mysqldump ${MYSQLDUMP_PARAMETERS_TABLES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC;/' |  perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/'  |  perl -pe 's/DEFINER=\`admin\`@\`%\`//' | perl -pe 's/SQL\s*?SECURITY\s*?DEFINER//'  >> ${FILE}
+echo "-- Create at ${DATE}" > ${FILE_TABLES}
+echo " SET foreign_key_checks=0;" >> ${FILE_TABLES}
+mysqldump ${MYSQLDUMP_PARAMETERS_TABLES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC;/' |  perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/'  |  perl -pe 's/DEFINER=\`admin\`@\`%\`//' | perl -pe 's/SQL\s*?SECURITY\s*?DEFINER//'  >> ${FILE_TABLES}
 
 echo "Exporting Procedures and Triggers... "
+echo "-- Create at ${DATE}" >> ${FILE_ROUTINES}
 echo " SET foreign_key_checks=0;" > ${FILE_ROUTINES}
 #mysqldump ${MYSQLDUMP_PARAMETERS_ROUTINES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC;/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/' |  perl -pe 's/DEFINER=\`admin\`@\`%\`//' | perl -pe 's/SQL\s*?SECURITY\s*?DEFINER//' |  perl -pe "s/\'latin1.*?\'//" | perl -pe 's/CHARSET\s(latin1|utf8)?\s//' | perl -pe 's/collate\s(latin1|utf8)_[a-z]*_[a-z]*//' | perl -pe "s/\'(latin1|utf8).*?\'//" >> ${FILE_ROUTINES}
 mysqldump ${MYSQLDUMP_PARAMETERS_ROUTINES} | perl -pe 's/AUTO_INCREMENT\s*?[=]\s*[0-9]*//g' | perl -pe 's/DEFAULT\s*?CHARSET\s*?[=]\s*[A-Za-z0-9]*//' | perl -pe 's/COLLATE\s*=?\s*[A-Za-z0-9_]*//' | perl -pe 's/CHARACTER SET\s*[A-Za-z0-9]*//' | perl -pe 's/^\/\*![0-9]*\s?SET.*\;$//' | perl -pe 's/[Mm][Yy][Ii][Ss][Aa][Mm]/InnoDB/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?ROW_FORMAT=[aA-zZ]*;$/INNODB ROW_FORMAT=DYNAMIC;/' | perl -pe 's/[Ii][Nn][Nn][Oo][Dd][Bb]\s*?;$/INNODB ROW_FORMAT=DYNAMIC;/' |  perl -pe 's/DEFINER=\`admin\`@\`%\`//' | perl -pe 's/SQL\s*?SECURITY\s*?DEFINER//' |  perl -pe 's/CHARSET\s(latin1|utf8)?\s//' | perl -pe 's/collate\s(latin1|utf8)_[a-z]*_[a-z]*//' | perl -pe "s/\'(latin1|utf8).*?\'//" >> ${FILE_ROUTINES}
@@ -133,14 +142,25 @@ DST_LOGIN="-u ${DESTINATION_MYSQL_USER} -p${DESTINATION_MYSQL_PASSWORD}"
 DST_HOST="-h ${DESTINATION_MYSQL_ENDPOINT}"
 MYSQL_OPTIONS="--default-character-set=${DESTINATION_MYSQL_CHARSET}"
 MYSQL_PARAMTERS="${DST_LOGIN} ${DST_HOST} ${MYSQL_OPTIONS} "
-read -t 10 -r -p "Execute the script on remote server? [y/N] (10 seconds timeout ) " response
-case $response in
-    [yY][eE][sS]|[yY])
-        mysql ${MYSQL_PARAMTERS} < ${RECREATE}
-        mysql ${MYSQL_PARAMTERS} < ${FILE_ROUTINES}
-        ;;
-    *)
+
+echo "-- Create at ${DATE}" > ${ALL_IN_ONE}
+echo "source ${FILE_DBS};" >> ${ALL_IN_ONE}
+echo "source ${FILE_TABLES};" >> ${ALL_IN_ONE}
+echo "source ${FILE_ROUTINES};" >> ${ALL_IN_ONE}
+
+#read -t 10 -r -p "Execute the script on remote server? [y/N] (10 seconds timeout ) " response
+#case $response in
+#    [yY][eE][sS]|[yY])
+#        mysql ${MYSQL_PARAMTERS} < ${RECREATE}
+#        mysql ${MYSQL_PARAMTERS} < ${FILE_ROUTINES}
+#        ;;
+#    *)
         echo "Finish... You can execute in anytime:"
-        echo "mysql options < ${RECREATE} or ${FILE_ROUTINES}"
-        ;;
-esac
+        echo "File per file"
+        echo "mysql options < ${FILE_DBS}"
+        echo "mysql options < ${FILE_TABLES}"
+        echo "mysql options < ${FILE_ROUTINES}"
+        echo " OR  "
+        echo "myqsl options < ${ALLINONE}"
+#        ;;
+#esac
