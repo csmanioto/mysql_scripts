@@ -69,7 +69,7 @@ for db in ${MYSQL_DATABASES_LIST};
   echo "CREATE DATABASE ${db}  DEFAULT CHARACTER SET ${DESTINATION_MYSQL_CHARSET} DEFAULT COLLATE ${DESTINATION_MYSQL_COLLATE};" >> ${RECREATE}
 done
 echo "source ${FILE};" >> ${RECREATE}
-echo "source ${FILE_ROUTINES};" >> ${RECREATE}
+#echo "source ${FILE_ROUTINES};" >> ${RECREATE}
 
 ###########
 # Test online on https://regex101.com/
@@ -137,9 +137,10 @@ read -t 10 -r -p "Execute the script on remote server? [y/N] (10 seconds timeout
 case $response in
     [yY][eE][sS]|[yY])
         mysql ${MYSQL_PARAMTERS} < ${RECREATE}
+        mysql ${MYSQL_PARAMTERS} < ${FILE_ROUTINES}
         ;;
     *)
         echo "Finish... You can execute in anytime:"
-        echo "mysql options < ${RECREATE}"
+        echo "mysql options < ${RECREATE} or ${FILE_ROUTINES}"
         ;;
 esac

@@ -132,7 +132,7 @@ do
   CONVERTED_FILE"${FILE_DESTINANTIO_PATH}/${db}_dataonly_${DESTINATION_MYSQL_CHARSET}_${DATE}.sql"
   DB_LOG="${FILE_DESTINANTIO_PATH}/${db}.log"
 
-  if mysql ${MYSQL_PARAMTERS} --tee=$DB_LOG  $db -e "source ${CONVERTED_FILE};"; then
+  if mysql ${MYSQL_PARAMTERS} --tee=$DB_LOG  $db -e "SET @FOREIGN_KEY_CHECKS = FALSE; SET @TRIGGER_CHECKS = FALSE; source ${CONVERTED_FILE};"; then
     NEW_DATE=$(date "+%Y-%m-%d %H:%M:%S")
     echo "${NEW_DATE}: ${db} IMPORTED WITH SUCCESSFUL"  | tee -a ${STATUS_LOG}
   else
