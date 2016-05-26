@@ -161,6 +161,6 @@ echo "source ${FILE_ROUTINES};" >> ${ALL_IN_ONE}
         echo "mysql options < ${FILE_TABLES}"
         echo "mysql options < ${FILE_ROUTINES}"
         echo " OR  "
-        echo "myqsl options < ${ALLINONE}"
+        echo "myqsl options < ${ALL_IN_ONE}"
 #        ;;
 #esac
