@@ -16,29 +16,9 @@
 # $ cd $FILE_DESTINANTIO_PATH
 # $ mysql -u new_mysql_login -h new_mysql_endpoint < recreate_instance_structure_yyyy-mm-dd.sql
 
-##########################################
-# Your source environment setings
-# Change with your environment information.
-SOURCE_MYSQL_USER="root"
-SOURCE_MYSQL_PASSWORD="PASSWORD"
-SOURCE_MYSQL_ENDPOINT="rds-db.remote.com"
-#SOURCE_MYSQL_CHARSET="latin1"
-
-# Your destinantion environment setings -- If you want execute on remote server after finish the DDL creation.
-DESTINATION_MYSQL_USER="root"
-DESTINATION_MYSQL_PASSWORD="password"
-DESTINATION_MYSQL_ENDPOINT="rdsdb.remote.com"
-#DESTINATION_MYSQL_CHARSET="utf8"
-#DESTINATION_MYSQL_COLLATE="utf8_general_ci"
-
-# Export settings...
-# If SOURCE_MYSQL_DATABASES is empty, script will export from SOURCE_ENDPOINT all databases (except systems databases)
-MYSQL_DATABASES_LIST="dbv1 dbv2 leads clientes tmp"
-FILE_DESTINANTIO_PATH="/export"
-
-
-
-############################################
+##############################################################
+# Your source environment setings in file user_variables.cfg #
+##############################################################
 
 ##########################################
 # imutable variables                    #
@@ -65,7 +45,7 @@ if [ -z $MYSQL_DATABASES_LIST ]; then
 fi
 
 DATE=$(date +%Y-%m-%d)
-FILE_TABLES="${FILE_DESTINANTIO_PATH}/recreate_instance_structure_${DATE}.sql"
+FILE_TABLES="${FILE_DESTINANTIO_PATH}/tables_structure_${DATE}.sql"
 FILE_DBS="${FILE_DESTINANTIO_PATH}/database_struct_${DATE}.sql"
 FILE_ROUTINES="${FILE_DESTINANTIO_PATH}/routine_${DATE}.sql"
 ALL_IN_ONE="${FILE_DESTINANTIO_PATH}/allinone_${DATE}.sql"
@@ -142,6 +122,9 @@ DST_LOGIN="-u ${DESTINATION_MYSQL_USER} -p${DESTINATION_MYSQL_PASSWORD}"
 DST_HOST="-h ${DESTINATION_MYSQL_ENDPOINT}"
 MYSQL_OPTIONS="--default-character-set=${DESTINATION_MYSQL_CHARSET}"
 MYSQL_PARAMTERS="${DST_LOGIN} ${DST_HOST} ${MYSQL_OPTIONS} "
+
+# apply custom Filters
+source clean_export_custom_filters.sh
 
 echo "-- Create at ${DATE}" > ${ALL_IN_ONE}
 echo "source ${FILE_DBS};" >> ${ALL_IN_ONE}
