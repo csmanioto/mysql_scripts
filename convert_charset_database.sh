@@ -25,8 +25,11 @@
 # imutable variables                    #
 # Don´t change code below..             #
 #########################################
-if [-f user_variables.cfg]; then
-  source user_variables.cfg
+if [ -f user_variables.cfg ]; then
+  source ./user_variables.cfg
+else
+  echo "user_variables.cfg not found..."
+  exit 1
 fi
 
 DATE=$(date +%Y-%m-%d)

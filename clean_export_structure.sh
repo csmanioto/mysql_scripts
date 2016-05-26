@@ -20,12 +20,15 @@
 # Your source environment setings in file user_variables.cfg #
 ##############################################################
 
-##########################################
+#########################################
 # imutable variables                    #
 # Don´t change code below..             #
 #########################################
-if [-f user_variables.cfg]; then
-  source user_variables.cfg
+if [ -f user_variables.cfg ]; then
+  source ./user_variables.cfg
+else
+  echo "user_variables.cfg not found..."
+  exit 1
 fi
 
 LOGIN="-u ${SOURCE_MYSQL_USER} -p${SOURCE_MYSQL_PASSWORD}"
@@ -124,7 +127,7 @@ MYSQL_OPTIONS="--default-character-set=${DESTINATION_MYSQL_CHARSET}"
 MYSQL_PARAMTERS="${DST_LOGIN} ${DST_HOST} ${MYSQL_OPTIONS} "
 
 # apply custom Filters
-source clean_export_custom_filters.sh
+source clean_export_custom_filter.sh
 
 echo "-- Create at ${DATE}" > ${ALL_IN_ONE}
 echo "source ${FILE_DBS};" >> ${ALL_IN_ONE}
