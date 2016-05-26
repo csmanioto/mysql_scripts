@@ -41,7 +41,7 @@ SRC_LOGIN="-u ${SOURCE_MYSQL_USER} -p${SOURCE_MYSQL_PASSWORD}"
 SRC_HOST="-h ${SOURCE_MYSQL_ENDPOINT}"
 SOURCE_MYSQL_CHARSET=$(echo ${SOURCE_MYSQL_CHARSET} | tr '[:upper:]' '[:lower:]' )
 SOURCE_ICONV_CHARSET=$(echo ${SOURCE_MYSQL_CHARSET} | tr '[:lower:]' '[:upper:]' )
-MYSQLDUMP_OPTIONS="--default-character-set=${SOURCE_MYSQL_CHARSET} --disable-keys --skip-triggers -no-create-info --single-transaction --no-set-names --disable-keys "
+MYSQLDUMP_OPTIONS="--default-character-set=${SOURCE_MYSQL_CHARSET} --disable-keys --skip-triggers --no-create-info --single-transaction --no-set-names "
 MYSQLDUMP_PARAMETERS="${SRC_LOGIN} ${SRC_HOST} ${MYSQLDUMP_OPTIONS} "
 
 #Variables of destinantion - MySQL (Import)
@@ -76,9 +76,9 @@ do
     NEW_DATE=$(date "+%Y-%m-%d %H:%M:%S")
     echo "${NEW_DATE}: Exporting database ${db}..."  | tee -a ${STATUS_LOG}
     ORIGINAL_FILE="${FILE_DESTINANTIO_PATH}/${db}_dataonly_${SOURCE_MYSQL_CHARSET}_${DATE}.sql"
-    CONVERTED_FILE"${FILE_DESTINANTIO_PATH}/${db}_dataonly_${DESTINATION_MYSQL_CHARSET}_${DATE}.sql"
+    CONVERTED_FILE="${FILE_DESTINANTIO_PATH}/${db}_dataonly_${DESTINATION_MYSQL_CHARSET}_${DATE}.sql"
 
-    if mysqldump ${MYSQLDUMP_PARAMETERS} ${db} -r  ${ORIGINAL_FILE}; then
+    if mysqldump ${MYSQLDUMP_PARAMETERS} ${db} -r ${ORIGINAL_FILE}; then
       if iconv -f ${SOURCE_ICONV_CHARSET} -t ${DESTINATION_ICONV_CHARSET}  ${ORIGINAL_FILE} > ${CONVERTED_FILE}; then
         #sed -e "s/SET NAMES ${SOURCE_MYSQL_CHARSET}/SET NAMES ${DESTINATION_MYSQL_CHARSET}/g" -i ${CONVERTED_FILE}
         #sed -e "s/CHARSET=latin1/CHARSET=${DESTINATION_MYSQL_CHARSET} COLLATE=${DESTINATION_MYSQL_COLLATE}/g" -i ${CONVERTED_FILE}
@@ -115,7 +115,7 @@ for db in ${MYSQL_DATABASES_LIST};
 do
   NEW_DATE=$(date "+%Y-%m-%d %H:%M:%S")
   echo "${NEW_DATE}: IMPORTING database ${db}..."  | tee -a ${STATUS_LOG}
-  CONVERTED_FILE"${FILE_DESTINANTIO_PATH}/${db}_dataonly_${DESTINATION_MYSQL_CHARSET}_${DATE}.sql"
+  CONVERTED_FILE="${FILE_DESTINANTIO_PATH}/${db}_dataonly_${DESTINATION_MYSQL_CHARSET}_${DATE}.sql"
   DB_LOG="${FILE_DESTINANTIO_PATH}/${db}.log"
 
   if mysql ${MYSQL_PARAMTERS} --tee=$DB_LOG  $db -e "SET @FOREIGN_KEY_CHECKS = FALSE; SET @TRIGGER_CHECKS = FALSE;source ${CONVERTED_FILE};"; then
