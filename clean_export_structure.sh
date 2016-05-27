@@ -127,7 +127,9 @@ MYSQL_OPTIONS="--default-character-set=${DESTINATION_MYSQL_CHARSET}"
 MYSQL_PARAMTERS="${DST_LOGIN} ${DST_HOST} ${MYSQL_OPTIONS} "
 
 # apply custom Filters
-source clean_export_custom_filter.sh
+if [ -f ./clean_export_custom_filter.sh ]; then
+  source clean_export_custom_filter.sh
+fi
 
 echo "-- Create at ${DATE}" > ${ALL_IN_ONE}
 echo "source ${FILE_DBS};" >> ${ALL_IN_ONE}

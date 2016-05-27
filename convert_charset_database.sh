@@ -58,11 +58,6 @@ MYSQL_PARAMTERS="${DST_LOGIN} ${DST_HOST} ${MYSQL_OPTIONS} "
 ###########################################
 # Start of export algorithim              #
 ###########################################
-if [ -z $MYSQL_DATABASES_LIST ]; then
-    MYSQL_DATABASES_LIST=$(mysql ${SRC_LOGIN} -h ${SRC_HOST} -r -s -N -e "show databases" | grep -Ev "^(Database|mysql|performance_schema|information_schema|innodb|sys)$")
-fi
-
-
 echo "--------------------------------------" > ${STATUS_LOG}
 echo "--------------------------------------" > ${ERROR_LOG}
 
@@ -82,6 +77,10 @@ do
       if iconv -f ${SOURCE_ICONV_CHARSET} -t ${DESTINATION_ICONV_CHARSET}  ${ORIGINAL_FILE} > ${CONVERTED_FILE}; then
         #sed -e "s/SET NAMES ${SOURCE_MYSQL_CHARSET}/SET NAMES ${DESTINATION_MYSQL_CHARSET}/g" -i ${CONVERTED_FILE}
         #sed -e "s/CHARSET=latin1/CHARSET=${DESTINATION_MYSQL_CHARSET} COLLATE=${DESTINATION_MYSQL_COLLATE}/g" -i ${CONVERTED_FILE}
+        # apply custom Filters
+        if [ -z ./convert_charset_database_custom_filter.sh ]; then
+          source convert_charset_database_custom_filter.sh
+        fi
         rm -f ${ORIGINAL_FILE}
       else
         echo "${NEW_DATE}: Error on iconv of ${db} " | tee -a ${ERROR_LOG}
