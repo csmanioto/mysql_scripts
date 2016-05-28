@@ -41,7 +41,7 @@ SRC_LOGIN="-u ${SOURCE_MYSQL_USER} -p${SOURCE_MYSQL_PASSWORD}"
 SRC_HOST="-h ${SOURCE_MYSQL_ENDPOINT}"
 SOURCE_MYSQL_CHARSET=$(echo ${SOURCE_MYSQL_CHARSET} | tr '[:upper:]' '[:lower:]' )
 SOURCE_ICONV_CHARSET=$(echo ${SOURCE_MYSQL_CHARSET} | tr '[:lower:]' '[:upper:]' )
-MYSQLDUMP_OPTIONS="--default-character-set=${SOURCE_MYSQL_CHARSET} --disable-keys --skip-triggers --no-create-info --single-transaction --no-set-names "
+MYSQLDUMP_OPTIONS="--default-character-set=${SOURCE_MYSQL_CHARSET} --disable-keys --skip-triggers --no-create-info --single-transaction --no-set-names --complete-insert --skip-extended-insert "
 MYSQLDUMP_PARAMETERS="${SRC_LOGIN} ${SRC_HOST} ${MYSQLDUMP_OPTIONS} "
 
 #Variables of destinantion - MySQL (Import)
@@ -78,7 +78,7 @@ do
         #sed -e "s/SET NAMES ${SOURCE_MYSQL_CHARSET}/SET NAMES ${DESTINATION_MYSQL_CHARSET}/g" -i ${CONVERTED_FILE}
         #sed -e "s/CHARSET=latin1/CHARSET=${DESTINATION_MYSQL_CHARSET} COLLATE=${DESTINATION_MYSQL_COLLATE}/g" -i ${CONVERTED_FILE}
         # apply custom Filters
-        if [ -z ./convert_charset_database_custom_filter.sh ]; then
+        if [ -f ./convert_charset_database_custom_filter.sh ]; then
           source convert_charset_database_custom_filter.sh
         fi
         rm -f ${ORIGINAL_FILE}
