@@ -41,7 +41,7 @@ SRC_LOGIN="-u ${SOURCE_MYSQL_USER} -p${SOURCE_MYSQL_PASSWORD}"
 SRC_HOST="-h ${SOURCE_MYSQL_ENDPOINT}"
 SOURCE_MYSQL_CHARSET=$(echo ${SOURCE_MYSQL_CHARSET} | tr '[:upper:]' '[:lower:]' )
 SOURCE_ICONV_CHARSET=$(echo ${SOURCE_MYSQL_CHARSET} | tr '[:lower:]' '[:upper:]' )
-MYSQLDUMP_OPTIONS="--default-character-set=${SOURCE_MYSQL_CHARSET} --disable-keys --skip-triggers --no-create-info --single-transaction --no-set-names -O max_allowed_packet=1G  --skip-extended-insert  " # --complete-insert
+MYSQLDUMP_OPTIONS="--default-character-set=${SOURCE_MYSQL_CHARSET} --disable-keys --skip-triggers --no-create-info --single-transaction --no-set-names  " # --complete-insert --skip-extended-insert 
 MYSQLDUMP_PARAMETERS="${SRC_LOGIN} ${SRC_HOST} ${MYSQLDUMP_OPTIONS} "
 
 #Variables of destinantion - MySQL (Import)
