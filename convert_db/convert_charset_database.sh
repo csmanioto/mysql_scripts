@@ -78,8 +78,8 @@ do
         #sed -e "s/SET NAMES ${SOURCE_MYSQL_CHARSET}/SET NAMES ${DESTINATION_MYSQL_CHARSET}/g" -i ${CONVERTED_FILE}
         #sed -e "s/CHARSET=latin1/CHARSET=${DESTINATION_MYSQL_CHARSET} COLLATE=${DESTINATION_MYSQL_COLLATE}/g" -i ${CONVERTED_FILE}
         # apply custom Filters
-        if [ -f ./convert_charset_database_custom_filter.sh ]; then
-          source convert_charset_database_afterdump_custom.cmd
+        if [ -f ./convert_charset_database_afterdump_custom.cmd ]; then
+          source ./convert_charset_database_afterdump_custom.cmd
         fi
         rm -f ${ORIGINAL_FILE}
       else

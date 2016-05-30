@@ -22,7 +22,7 @@ Now I decided save this script in github to make versions. But I love helping pe
 
 # Stable scripts:
 * convert_db Folder:
-  * clean_export_structure.sh
+  * clean_structure_database.sh
     - [x] Converting database engine from myisam to innodb. Recreating  triggers and routines in a clean sql file without charset and especial mysqldump command;
     - [x] Convert all innodb simple table in INNODB ROW_FORMAT=DYNAMIC (change my.cnf to enable barracuda)
     - [x] Use it to do two things: converting engine and converting charset types (latin1 to utf8 or outhers).

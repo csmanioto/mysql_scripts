@@ -127,7 +127,7 @@ MYSQL_OPTIONS="--default-character-set=${DESTINATION_MYSQL_CHARSET}"
 MYSQL_PARAMTERS="${DST_LOGIN} ${DST_HOST} ${MYSQL_OPTIONS} "
 
 # apply custom Filters
-if [ -f ./clean_export_custom_filter.sh ]; then
+if [ -f ./clean_export_custom_afterdump.cmd ]; then
   source ./clean_export_custom_afterdump.cmd
 fi
 
