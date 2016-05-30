@@ -128,7 +128,7 @@ MYSQL_PARAMTERS="${DST_LOGIN} ${DST_HOST} ${MYSQL_OPTIONS} "
 
 # apply custom Filters
 if [ -f ./clean_export_custom_filter.sh ]; then
-  source ./clean_export_custom.cmd
+  source ./clean_export_custom_afterdump.cmd
 fi
 
 echo "-- Create at ${DATE}" > ${ALL_IN_ONE}
