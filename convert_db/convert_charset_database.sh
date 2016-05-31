@@ -26,11 +26,6 @@
 # Don´t change code below..             #
 #########################################
 BASEDIR="${PWD}"
-DATE=$(date +%Y-%m-%d)
-ERROR_LOG="${FILE_DESTINANTIO_PATH}/error_${DATE}.log"
-STATUS_LOG="${FILE_DESTINANTIO_PATH}/status_${DATE}.log"
-
-
 if [ -f ${BASEDIR}/user_variables.cfg ]; then
   source ${BASEDIR}/user_variables.cfg
   echo "Variables loaded"
@@ -39,6 +34,10 @@ else
   exit 1
 fi
 
+
+DATE=$(date +%Y-%m-%d)
+ERROR_LOG="${FILE_DESTINANTIO_PATH}/error_${DATE}.log"
+STATUS_LOG="${FILE_DESTINANTIO_PATH}/status_${DATE}.log"
 
 #Variables of SOURCE DATABASE - MySQLDUMP
 SRC_LOGIN="-u ${SOURCE_MYSQL_USER} -p${SOURCE_MYSQL_PASSWORD}"
