@@ -34,6 +34,9 @@ else
   exit 1
 fi
 
+if [ ! -d "$FILE_DESTINANTIO_PATH" ]; then
+    mkdir -p ${FILE_DESTINANTIO_PATH}
+fi
 
 DATE=$(date +%Y-%m-%d)
 ERROR_LOG="${FILE_DESTINANTIO_PATH}/error_${DATE}.log"
@@ -153,7 +156,7 @@ show_menus() {
 
 read_options(){
   	local choice
-  	read -p "Enter choice [ 1 - 3] " choice
+  	read -p "Enter choice [ 1 - 4] " choice
   	case $choice in
   		1) export_data && import_data ;;
   		2) export_data ;;
