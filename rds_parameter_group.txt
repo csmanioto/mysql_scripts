@@ -1,4 +1,5 @@
 # In AWS RDS is very common use this setup
+max_allowed_packet = 1073741824
 
 # Used when you convert table from myisam to innodb
 innodb_file_format = BARRACUDA
